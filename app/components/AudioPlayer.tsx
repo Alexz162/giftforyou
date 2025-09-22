@@ -49,7 +49,7 @@ const AudioPlayer = () => {
       <audio 
         ref={audioRef} 
         loop 
-        src="/This Side of Paradise.mp3"
+        src="/brazil.mp3"
       />
     </div>
   );

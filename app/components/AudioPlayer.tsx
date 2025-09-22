@@ -3,63 +3,54 @@
 import { useEffect, useRef } from 'react';
 
 const AudioPlayer = () => {
-  const playerRef = useRef<any>(null);
-  const videoId = 'FHT3xNYZU8o'; // ID del video de YouTube
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
-    // Cargar la API de YouTube
-    const tag = document.createElement('script');
-    tag.src = 'https://www.youtube.com/iframe_api';
-    const firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode!.insertBefore(tag, firstScriptTag);
+    const audio = audioRef.current;
+    if (!audio) return;
 
-    // Crear reproductor cuando la API esté lista
-    window.onYouTubeIframeAPIReady = () => {
-      playerRef.current = new window.YT.Player('youtube-audio', {
-        height: '0',
-        width: '0',
-        videoId: videoId,
-        playerVars: {
-          autoplay: 1,
-          loop: 1,
-          playlist: videoId, // Para que funcione el loop
-          modestbranding: 1,
-          controls: 0,
-          showinfo: 0,
-          rel: 0,
-          enablejsapi: 1
-        },
-        events: {
-          onReady: (e: any) => {
-            // Configurar volumen bajo (20%)
-            e.target.setVolume(20);
-            // Reproducir automáticamente
-            e.target.playVideo();
-            
-            // Asegurarse de que el audio se reproduzca después de la interacción del usuario
-            const handleFirstInteraction = () => {
-              e.target.unMute();
-              document.removeEventListener('click', handleFirstInteraction);
-              document.removeEventListener('keydown', handleFirstInteraction);
-            };
-            
-            document.addEventListener('click', handleFirstInteraction);
-            document.addEventListener('keydown', handleFirstInteraction);
-          }
-        }
+    // Configurar el volumen al 20%
+    audio.volume = 0.2;
+    
+    // Función para manejar la primera interacción del usuario
+    const handleFirstInteraction = () => {
+      // Reproducir el audio cuando el usuario interactúe con la página
+      audio.play().catch(error => {
+        console.error('Error al reproducir el audio:', error);
       });
+      
+      // Eliminar los event listeners después de la primera interacción
+      document.removeEventListener('click', handleFirstInteraction);
+      document.removeEventListener('keydown', handleFirstInteraction);
     };
+
+    // Agregar event listeners para la primera interacción del usuario
+    document.addEventListener('click', handleFirstInteraction);
+    document.addEventListener('keydown', handleFirstInteraction);
+
+    // Configurar el bucle
+    const handleEnded = () => {
+      audio.currentTime = 0;
+      audio.play();
+    };
+
+    audio.addEventListener('ended', handleEnded);
 
     return () => {
-      if (playerRef.current) {
-        playerRef.current.destroy();
-      }
+      // Limpiar event listeners
+      document.removeEventListener('click', handleFirstInteraction);
+      document.removeEventListener('keydown', handleFirstInteraction);
+      audio.removeEventListener('ended', handleEnded);
     };
-  }, [videoId]);
+  }, []);
 
   return (
     <div className="hidden">
-      <div id="youtube-audio"></div>
+      <audio 
+        ref={audioRef} 
+        loop 
+        src="/This Side of Paradise.mp3"
+      />
     </div>
   );
 };
